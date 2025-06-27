@@ -56,11 +56,15 @@ module.exports = async (req, res) => {
         ? new Date(sentAt).toLocaleString("sr-RS")
         : "nepoznat datum";
 
-      const trackingNumber = lastOrder.fulfillments?.[0]?.tracking_number || "nije unet";
-      const trackingUrl = lastOrder.fulfillments?.[0]?.tracking_url || "";
+      const trackingNumber = lastOrder.fulfillments?.[0]?.tracking_number;
+      const trackingUrl = trackingNumber
+        ? `https://www.posta.rs/cir/alati/pracenje-posiljke.aspx?brojPosiljke=${trackingNumber}`
+        : null;
 
       return res.status(200).json({
-        message: `📦 Porudžbina je poslata ${formattedDate}.\nBroj za praćenje: ${trackingNumber}${trackingUrl ? `\nPratite je ovde: ${trackingUrl}` : ""}`
+        message: `Porudžbina je poslata ${formattedDate}. ${
+          trackingUrl ? `Možete je pratiti ovde: ${trackingUrl}` : ""
+        }`
       });
     } else {
       return res.status(200).json({
