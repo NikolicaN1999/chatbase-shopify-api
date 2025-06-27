@@ -3,16 +3,14 @@ const axios = require("axios");
 module.exports = async (req, res) => {
   const { email, first_name, last_name } = req.body;
 
-  const SHOPIFY_STORE = "printstick.myshopify.com"; // zameni ako treba
-  const SHOPIFY_TOKEN = "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";  
+  const SHOPIFY_STORE = "printstick.myshopify.com";
+   const SHOPIFY_TOKEN = "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"; 
 
-  // Validacija kombinacija
   if (!email && (!first_name || !last_name)) {
-  return res.status(200).json({
-    message: "Molimo Vas unesite Vaše ime i prezime ili email adresu koju ste koristili tokom porudžbine kako bismo mogli da proverimo status Vaše porudžbine."
-  });
-}
-
+    return res.status(200).json({
+      message: "Molimo Vas unesite Vaše ime i prezime ili email adresu koju ste koristili tokom porudžbine kako bismo mogli da proverimo status Vaše porudžbine.
+    });
+  }
 
   if (!email && !first_name && !last_name) {
     return res.status(200).json({
@@ -37,7 +35,6 @@ module.exports = async (req, res) => {
       const emailMatch = email ? order.email === email : true;
       const firstNameMatch = first_name ? order.customer?.first_name?.toLowerCase() === first_name.toLowerCase() : true;
       const lastNameMatch = last_name ? order.customer?.last_name?.toLowerCase() === last_name.toLowerCase() : true;
-
       return emailMatch && firstNameMatch && lastNameMatch;
     });
 
@@ -49,11 +46,21 @@ module.exports = async (req, res) => {
 
     const lastOrder = matchingOrders[0];
     const status = lastOrder.fulfillment_status;
-    const msg = status === "fulfilled"
-      ? "Porudžbina je poslata."
-      : "Porudžbina još nije poslata.";
 
-    res.status(200).json({ message: msg });
+    if (status === "fulfilled") {
+      const sentAt = lastOrder.fulfillments?.[0]?.created_at;
+      const formattedDate = sentAt
+        ? new Date(sentAt).toLocaleString("sr-RS")
+        : "nepoznat datum";
+
+      return res.status(200).json({
+        message: `Porudžbina je poslata ${formattedDate}.`
+      });
+    } else {
+      return res.status(200).json({
+        message: "Porudžbina još nije poslata."
+      });
+    }
   } catch (err) {
     console.error(err.response?.data || err.message);
     res.status(500).json({
