@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = async (req, res) => {
   const { email, first_name, last_name } = req.body;
 
-  const SHOPIFY_STORE = "printstick.myshopify.com";
+  const SHOPIFY_STORE = "printstick.myshopify.com"; // zameni ako treba
   const SHOPIFY_TOKEN = "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";   
 
   try {
@@ -19,11 +19,14 @@ module.exports = async (req, res) => {
 
     const orders = response.data.orders;
 
-    const matchingOrders = orders.filter(order =>
-      order.email === email &&
-      order.customer?.first_name?.toLowerCase() === first_name.toLowerCase() &&
-      order.customer?.last_name?.toLowerCase() === last_name.toLowerCase()
-    );
+    // Primenjujemo filtriranje fleksibilno
+    const matchingOrders = orders.filter(order => {
+      const emailMatch = email ? order.email === email : true;
+      const firstNameMatch = first_name ? order.customer?.first_name?.toLowerCase() === first_name.toLowerCase() : true;
+      const lastNameMatch = last_name ? order.customer?.last_name?.toLowerCase() === last_name.toLowerCase() : true;
+
+      return emailMatch && firstNameMatch && lastNameMatch;
+    });
 
     if (matchingOrders.length === 0) {
       return res.status(200).json({
