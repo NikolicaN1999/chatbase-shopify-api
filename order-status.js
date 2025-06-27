@@ -3,8 +3,8 @@ const axios = require("axios");
 module.exports = async (req, res) => {
   const { email } = req.body;
 
-  const SHOPIFY_STORE = "your-store.myshopify.com"; // zameni
-  const SHOPIFY_TOKEN = "your_admin_api_token";    // zameni
+  const SHOPIFY_STORE = "printstick.myshopify.com";
+  const SHOPIFY_TOKEN = "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"
 
   try {
     const response = await axios.get(
