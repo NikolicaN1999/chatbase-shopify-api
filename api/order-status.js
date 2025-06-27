@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
 
   if (!email && (!first_name || !last_name)) {
     return res.status(200).json({
-      message: "Molimo Vas unesite Vaše ime i prezime ili email adresu koju ste koristili tokom porudžbine kako bismo mogli da proverimo status Vaše porudžbine.
+      message: "Molimo Vas unesite Vaše ime i prezime ili email adresu koju ste koristili tokom porudžbine kako bismo mogli da proverimo status Vaše porudžbine."
     });
   }
 
