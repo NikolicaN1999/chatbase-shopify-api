@@ -4,7 +4,26 @@ module.exports = async (req, res) => {
   const { email, first_name, last_name } = req.body;
 
   const SHOPIFY_STORE = "printstick.myshopify.com"; // zameni ako treba
-  const SHOPIFY_TOKEN = "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";   
+  const SHOPIFY_TOKEN = "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";  
+
+  // Validacija kombinacija
+  if (!email && first_name && !last_name) {
+    return res.status(200).json({
+      message: "Uneli ste samo ime. Da bismo pronašli porudžbinu, unesite i prezime."
+    });
+  }
+
+  if (!email && !first_name && last_name) {
+    return res.status(200).json({
+      message: "Uneli ste samo prezime. Da bismo pronašli porudžbinu, unesite i ime."
+    });
+  }
+
+  if (!email && !first_name && !last_name) {
+    return res.status(200).json({
+      message: "Molimo unesite barem email ili kombinaciju imena i prezimena."
+    });
+  }
 
   try {
     const response = await axios.get(
@@ -19,7 +38,6 @@ module.exports = async (req, res) => {
 
     const orders = response.data.orders;
 
-    // Primenjujemo filtriranje fleksibilno
     const matchingOrders = orders.filter(order => {
       const emailMatch = email ? order.email === email : true;
       const firstNameMatch = first_name ? order.customer?.first_name?.toLowerCase() === first_name.toLowerCase() : true;
