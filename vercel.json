@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "functions": {
+    "api/order-status.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/order-status",
+      "dest": "/api/order-status.js"
+    }
+  ]
+}
