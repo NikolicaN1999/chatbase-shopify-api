@@ -7,17 +7,12 @@ module.exports = async (req, res) => {
   const SHOPIFY_TOKEN = "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";  
 
   // Validacija kombinacija
-  if (!email && first_name && !last_name) {
-    return res.status(200).json({
-      message: "Uneli ste samo ime. Da bismo pronašli porudžbinu, unesite i prezime."
-    });
-  }
+  if (!email && (!first_name || !last_name)) {
+  return res.status(200).json({
+    message: "Molimo Vas unesite Vaše ime i prezime ili email adresu koju ste koristili tokom porudžbine kako bismo mogli da proverimo status Vaše porudžbine."
+  });
+}
 
-  if (!email && !first_name && last_name) {
-    return res.status(200).json({
-      message: "Uneli ste samo prezime. Da bismo pronašli porudžbinu, unesite i ime."
-    });
-  }
 
   if (!email && !first_name && !last_name) {
     return res.status(200).json({
