@@ -56,8 +56,11 @@ module.exports = async (req, res) => {
         ? new Date(sentAt).toLocaleString("sr-RS")
         : "nepoznat datum";
 
+      const trackingNumber = lastOrder.fulfillments?.[0]?.tracking_number || "nije unet";
+      const trackingUrl = lastOrder.fulfillments?.[0]?.tracking_url || "";
+
       return res.status(200).json({
-        message: `Porudžbina je poslata ${formattedDate}.`
+        message: `📦 Porudžbina je poslata ${formattedDate}.\nBroj za praćenje: ${trackingNumber}${trackingUrl ? `\nPratite je ovde: ${trackingUrl}` : ""}`
       });
     } else {
       return res.status(200).json({
