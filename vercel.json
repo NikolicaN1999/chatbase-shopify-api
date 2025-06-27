@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "functions": {
-    "api/order-status.js": {
-      "runtime": "nodejs18.x"
+  "builds": [
+    {
+      "src": "api/order-status.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/order-status",
