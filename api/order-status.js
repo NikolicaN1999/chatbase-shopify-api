@@ -2,6 +2,9 @@ const axios = require("axios");
 
 module.exports = async (req, res) => {
   const { email } = req.body;
+  const firstName = req.body.first_name;
+  const lastName = req.body.last_name;
+
 
   const SHOPIFY_STORE = "printstick.myshopify.com"; 
   const SHOPIFY_TOKEN = "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";    
