@@ -20,7 +20,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Poziv ka Shopify API-ju uz status=any i limit=250
     const response = await axios.get(
       `https://${SHOPIFY_STORE}/admin/api/2024-04/orders.json?status=any&limit=250`,
       {
@@ -52,19 +51,15 @@ module.exports = async (req, res) => {
 
     if (status === "fulfilled") {
       const sentAt = lastOrder.fulfillments?.[0]?.created_at;
+      const trackingNumber = lastOrder.fulfillments?.[0]?.tracking_number;
       const formattedDate = sentAt
-        ? new Date(sentAt).toLocaleString("sr-RS")
+        ? new Date(sentAt).toLocaleDateString("sr-RS")
         : "nepoznat datum";
 
-      const trackingNumber = lastOrder.fulfillments?.[0]?.tracking_number;
-      const trackingUrl = trackingNumber
-        ? `https://www.posta.rs/cir/alati/pracenje-posiljke.aspx?brojPosiljke=${trackingNumber}`
-        : null;
+      const trackingUrl = "https://www.posta.rs/cir/alati/pracenje-posiljke.aspx";
 
       return res.status(200).json({
-        message: `Porudžbina je poslata ${formattedDate}. ${
-          trackingUrl ? `Možete je pratiti ovde: ${trackingUrl}` : ""
-        }`
+        message: `Vaša porudžbina je poslata ${formattedDate}. 📦\nBroj pošiljke: ${trackingNumber || "nije dostupan"}\nMožete je pratiti preko ovog linka:\n${trackingUrl}`
       });
     } else {
       return res.status(200).json({
