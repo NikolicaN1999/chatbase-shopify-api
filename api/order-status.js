@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   const { email, first_name, last_name } = req.body;
 
   const SHOPIFY_STORE = "printstick.myshopify.com";
-  const SHOPIFY_TOKEN = "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";
+  const SHOPIFY_TOKEN = "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";
 
   // Validacija unosa
   if (!email && (!first_name || !last_name)) {
