@@ -3,8 +3,8 @@ const axios = require("axios");
 module.exports = async (req, res) => {
   const { email, first_name, last_name } = req.body;
 
-  const SHOPIFY_STORE = "printstick.myshopify.com";
-  const SHOPIFY_TOKEN = "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";
+  const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
+  const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
 
   // Validacija unosa
   if (!email && (!first_name || !last_name)) {
