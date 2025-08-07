@@ -61,7 +61,7 @@ app.post("/order-status", async (req, res) => {
     if (matchingOrders.length === 0) {
       return res.status(200).json({
         message:
-          "Nažalost, nismo pronašli porudžbinu za unete podatke. Proverite informacije i pokušajte ponovo.",
+          "Nažalost, nismo pronašli porudžbinu za unete podatke. Molimo Vas unesite Vašu email adresu koju ste koristili tokom porudžbine kako bismo mogli da proverimo status Vaše porudžbine.",
       });
     }
 
@@ -83,7 +83,7 @@ app.post("/order-status", async (req, res) => {
       });
     } else {
       return res.status(200).json({
-        message: "Porudžbina još nije poslata.",
+        message: "Vaša porudžbina je primljena i trenutno se obrađuje. Rok za izradu i pripremu porudžbine je obično između 5-7 radnih dana.",
       });
     }
   } catch (err) {
