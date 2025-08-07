@@ -71,7 +71,7 @@ app.post("/order-status", async (req, res) => {
         "https://www.posta.rs/cir/alati/pracenje-posiljke.aspx";
 
       return res.status(200).json({
-        message: `Vaša porudžbina je poslata ${formattedDate}.📦\n`,
+        message: `Vaša porudžbina je poslata ${formattedDate}.📦 Možete je očekivati uskoro na Vašoj adresi.\n`,
       });
     } else {
       return res.status(200).json({
