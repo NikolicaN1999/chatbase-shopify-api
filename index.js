@@ -71,9 +71,7 @@ app.post("/order-status", async (req, res) => {
         "https://www.posta.rs/cir/alati/pracenje-posiljke.aspx";
 
       return res.status(200).json({
-        message: `Vaša porudžbina je poslata ${formattedDate}. 📦\nBroj pošiljke: ${
-          trackingNumber || "nije dostupan"
-        }\nMožete je pratiti preko ovog linka:\n${trackingUrl}`,
+        message: `Vaša porudžbina je poslata ${formattedDate}.📦\n`,
       });
     } else {
       return res.status(200).json({
