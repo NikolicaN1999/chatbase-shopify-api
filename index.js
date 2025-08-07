@@ -1,6 +1,5 @@
 const express = require("express");
 const axios = require("axios");
-require("dotenv").config(); // ako koristiš lokalni `.env` fajl
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,8 +9,8 @@ app.use(express.json());
 app.post("/order-status", async (req, res) => {
   const { email, first_name, last_name } = req.body;
 
-  const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
-  const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
+  const SHOPIFY_STORE = "printstick.myshopify.com";
+  const SHOPIFY_TOKEN = "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";
 
   // Validacija unosa
   if (!email && (!first_name || !last_name)) {
