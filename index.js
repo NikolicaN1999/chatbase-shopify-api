@@ -4,15 +4,39 @@ const axios = require("axios");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Funkcija za normalizaciju (uklanja č, ć, š, ž, đ itd.)
-function normalize(text) {
+app.use(express.json());
+
+/**
+ * Pretvara ćirilicu u latinicu
+ */
+function cyrToLat(text) {
+  const map = {
+    А: "A", а: "a", Б: "B", б: "b", В: "V", в: "v",
+    Г: "G", г: "g", Д: "D", д: "d", Ђ: "Đ", ђ: "đ",
+    Е: "E", е: "e", Ж: "Ž", ж: "ž", З: "Z", з: "z",
+    И: "I", и: "i", Ј: "J", ј: "j", К: "K", к: "k",
+    Л: "L", л: "l", Љ: "Lj", љ: "lj", М: "M", м: "m",
+    Н: "N", н: "n", Њ: "Nj", њ: "nj", О: "O", о: "o",
+    П: "P", п: "p", Р: "R", р: "r", С: "S", с: "s",
+    Т: "T", т: "t", Ћ: "Ć", ћ: "ć", У: "U", у: "u",
+    Ф: "F", ф: "f", Х: "H", х: "h", Ц: "C", ц: "c",
+    Ч: "Č", ч: "č", Џ: "Dž", џ: "dž", Ш: "Š", ш: "š"
+  };
   return text
-    .normalize("NFD") // razdvoji osnovna slova od dijakritika
-    .replace(/[\u0300-\u036f]/g, "") // ukloni dijakritike
-    .toLowerCase();
+    .split("")
+    .map(char => map[char] || char)
+    .join("");
 }
 
-app.use(express.json());
+/**
+ * Normalizuje tekst: ćirilicu → latinicu, uklanja dijakritiku, pretvara u lowercase
+ */
+function normalize(text) {
+  return cyrToLat(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
 app.post("/order-status", async (req, res) => {
   const { email, first_name, last_name } = req.body;
@@ -70,20 +94,17 @@ app.post("/order-status", async (req, res) => {
 
     if (status === "fulfilled") {
       const sentAt = lastOrder.fulfillments?.[0]?.created_at;
-      const trackingNumber = lastOrder.fulfillments?.[0]?.tracking_number;
       const formattedDate = sentAt
         ? new Date(sentAt).toLocaleDateString("sr-RS")
         : "nepoznat datum";
-
-      const trackingUrl =
-        "https://www.posta.rs/cir/alati/pracenje-posiljke.aspx";
 
       return res.status(200).json({
         message: `Vaša porudžbina je poslata ${formattedDate} 📦 Možete je očekivati uskoro na Vašoj adresi.`,
       });
     } else {
       return res.status(200).json({
-        message: "Vaša porudžbina je primljena i trenutno se obrađuje. Rok za izradu i pripremu porudžbine je obično između 5-7 radnih dana.",
+        message:
+          "Vaša porudžbina je primljena i trenutno se obrađuje. Rok za izradu i pripremu porudžbine je obično između 5-7 radnih dana.",
       });
     }
   } catch (err) {
