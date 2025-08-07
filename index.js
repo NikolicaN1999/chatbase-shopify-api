@@ -4,6 +4,14 @@ const axios = require("axios");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Funkcija za normalizaciju (uklanja č, ć, š, ž, đ itd.)
+function normalize(text) {
+  return text
+    .normalize("NFD") // razdvoji osnovna slova od dijakritika
+    .replace(/[\u0300-\u036f]/g, "") // ukloni dijakritike
+    .toLowerCase();
+}
+
 app.use(express.json());
 
 app.post("/order-status", async (req, res) => {
@@ -42,10 +50,10 @@ app.post("/order-status", async (req, res) => {
     const matchingOrders = orders.filter((order) => {
       const emailMatch = email ? order.email === email : true;
       const firstNameMatch = first_name
-        ? order.customer?.first_name?.toLowerCase() === first_name.toLowerCase()
+        ? normalize(order.customer?.first_name || "") === normalize(first_name)
         : true;
       const lastNameMatch = last_name
-        ? order.customer?.last_name?.toLowerCase() === last_name.toLowerCase()
+        ? normalize(order.customer?.last_name || "") === normalize(last_name)
         : true;
       return emailMatch && firstNameMatch && lastNameMatch;
     });
@@ -71,7 +79,7 @@ app.post("/order-status", async (req, res) => {
         "https://www.posta.rs/cir/alati/pracenje-posiljke.aspx";
 
       return res.status(200).json({
-        message: `Vaša porudžbina je poslata ${formattedDate}.📦 Možete je očekivati uskoro na Vašoj adresi.\n`,
+        message: `Vaša porudžbina je poslata ${formattedDate} 📦 Možete je očekivati uskoro na Vašoj adresi.`,
       });
     } else {
       return res.status(200).json({
