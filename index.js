@@ -111,7 +111,7 @@ app.post("/order-status", async (req, res) => {
     console.error(err.response?.data || err.message);
     res.status(500).json({
       message:
-        "Došlo je do greške pri obradi vašeg zahteva. Molimo pokušajte kasnije ili nas kontaktirajte.",
+        "Došlo je do greške pri obradi vašeg zahteva. Molimo pokušajte kasnije ili nas kontaktirajte na broj telefona 063/497 489.",
     });
   }
 });
