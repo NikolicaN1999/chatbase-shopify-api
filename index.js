@@ -1,18 +1,29 @@
+// app.js
 const express = require("express");
-const bodyParser = require("body-parser");
 const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// SHOPIFY VARIJABLE IZ ENV
-const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
-const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET; 
+// === ENV varijable (moraš ih imati postavljene u Railway) ===
+const SHOPIFY_STORE   = process.env.SHOPIFY_STORE;   // npr. "printstick.myshopify.com"
+const SHOPIFY_TOKEN   = process.env.SHOPIFY_TOKEN;   // Admin API token sa read_customers + read_orders
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET; // ako je postavljen → traži header
 
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Ćirilica → latinica
+// (OPCIONO) Zaštita endpointa: aktivna SAMO ako je INTERNAL_SECRET postavljen u ENV
+app.use((req, res, next) => {
+  if (INTERNAL_SECRET) {
+    const hdr = req.get("x-internal-secret");
+    if (hdr !== INTERNAL_SECRET) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+  }
+  next();
+});
+
+// Ćirilica → latinica (za ime/prezime)
 function cyrToLat(text) {
   const map = {
     А:"A", а:"a", Б:"B", б:"b", В:"V", в:"v",
@@ -28,13 +39,22 @@ function cyrToLat(text) {
   };
   return (text || "").split("").map(ch => map[ch] || ch).join("");
 }
-
 function normalize(text) {
   return cyrToLat(text || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().trim();
 }
 
+// Sanity check ruta (pomaže kod deploy-a)
+app.get("/_health", (req, res) => {
+  res.json({
+    store_ok: typeof SHOPIFY_STORE === "string" && SHOPIFY_STORE.includes(".myshopify.com"),
+    token_set: !!(SHOPIFY_TOKEN && SHOPIFY_TOKEN.length > 10),
+    secret_required: !!INTERNAL_SECRET
+  });
+});
+
+// Prekonfigurisani Shopify REST klijent
 const api = axios.create({
   baseURL: `https://${SHOPIFY_STORE}/admin/api/2024-04`,
   headers: {
@@ -44,6 +64,15 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// Loguj tačan status/grešku iz Shopify-ja (bez tokena)
+api.interceptors.response.use(r => r, err => {
+  const status = err?.response?.status;
+  const errors = err?.response?.data?.errors;
+  console.error("Shopify API error:", { status, errors, msg: err?.message });
+  return Promise.reject(err);
+});
+
+// 1) Pronađi kupce po emailu ili imenu/prezimenu
 async function findCustomers({ email, first_name, last_name }) {
   if (email) {
     const { data } = await api.get(`/customers/search.json`, {
@@ -53,7 +82,7 @@ async function findCustomers({ email, first_name, last_name }) {
   }
   const parts = [];
   if (first_name) parts.push(`first_name:${first_name}`);
-  if (last_name) parts.push(`last_name:${last_name}`);
+  if (last_name)  parts.push(`last_name:${last_name}`);
   if (!parts.length) return [];
   const { data } = await api.get(`/customers/search.json`, {
     params: { query: parts.join(" ") },
@@ -61,13 +90,15 @@ async function findCustomers({ email, first_name, last_name }) {
   return Array.isArray(data?.customers) ? data.customers : [];
 }
 
+// 2) Učitaj porudžbine kupca (ispravan endpoint)
 async function fetchOrdersByCustomerId(customerId) {
-  const { data } = await api.get(`/orders.json`, {
-    params: { status: "any", limit: 50, customer_id: customerId },
+  const { data } = await api.get(`/customers/${customerId}/orders.json`, {
+    params: { limit: 50, fields: "id,created_at,fulfillment_status,email,customer,fulfillments" }
   });
   return Array.isArray(data?.orders) ? data.orders : [];
 }
 
+// Najnoviji fulfillment timestamp (ako postoji)
 function getLatestFulfillmentDate(order) {
   const list = Array.isArray(order?.fulfillments) ? order.fulfillments : [];
   if (!list.length) return null;
@@ -79,13 +110,20 @@ function getLatestFulfillmentDate(order) {
 app.post("/order-status", async (req, res) => {
   const { email, first_name, last_name } = req.body || {};
 
+  // Validacija unosa
   if (!email && (!first_name || !last_name)) {
     return res.status(200).json({
       message: "Molimo unesite ime i prezime ili email adresu koju ste koristili tokom porudžbine."
     });
   }
 
+  // Validacija ENV (često uzrok 500)
+  if (!SHOPIFY_STORE || !SHOPIFY_TOKEN) {
+    return res.status(500).json({ message: "Konfiguracija servera nije kompletna (STORE/TOKEN)." });
+  }
+
   try {
+    // 1) Pronađi odgovarajuće kupce
     const customers = await findCustomers({ email, first_name, last_name });
     if (!customers.length) {
       return res.status(200).json({
@@ -93,11 +131,11 @@ app.post("/order-status", async (req, res) => {
       });
     }
 
-    const allOrdersArrays = await Promise.all(
-      customers.map(c => fetchOrdersByCustomerId(c.id))
-    );
+    // 2) Učitaj porudžbine svih kandidata
+    const allOrdersArrays = await Promise.all(customers.map(c => fetchOrdersByCustomerId(c.id)));
     const orders = allOrdersArrays.flat();
 
+    // 3) Dodatno strogo filtriranje po emailu/imenima
     const nEmail = email ? normalize(email) : null;
     const nFirst = first_name ? normalize(first_name) : null;
     const nLast  = last_name  ? normalize(last_name)  : null;
@@ -115,10 +153,8 @@ app.post("/order-status", async (req, res) => {
       });
     }
 
-    const lastOrder = matches.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    )[0];
-
+    // 4) Najnovija porudžbina po created_at
+    const lastOrder = matches.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
     const latestFulfillmentAt = getLatestFulfillmentDate(lastOrder);
 
     if (lastOrder.fulfillment_status === "fulfilled" || latestFulfillmentAt) {
@@ -133,10 +169,19 @@ app.post("/order-status", async (req, res) => {
     return res.status(200).json({
       message: "Vaša porudžbina je primljena i u obradi je. Rok izrade je obično 5–7 radnih dana."
     });
+
   } catch (err) {
-    console.error("Order status error:", err?.response?.status || err?.message);
-    return res.status(500).json({
-      message: "Došlo je do greške pri obradi zahteva. Pokušajte kasnije ili nas kontaktirajte na 063/497 489."
+    // Transparentniji log + vraćanje originalnog statusa (ako postoji)
+    const status = err?.response?.status || 500;
+    const errors = err?.response?.data?.errors;
+    console.error("Order status error:", { status, errors, msg: err?.message });
+
+    return res.status(status).json({
+      message:
+        status === 401 ? "Shopify auth problem (proverite Admin API token)." :
+        status === 403 ? "Shopify permissions problem (dodajte read_customers + read_orders i reinstalirajte app)." :
+        status === 404 ? "Shopify endpoint nije pronađen (proverite STORE domen)." :
+        "Došlo je do greške pri obradi zahteva. Pokušajte kasnije ili nas kontaktirajte na 063/497 489."
     });
   }
 });
