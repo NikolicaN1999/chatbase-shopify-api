@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 // SHOPIFY VARIJABLE IZ ENV
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
 const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET; 
 
 app.use(bodyParser.json());
 
