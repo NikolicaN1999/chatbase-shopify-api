@@ -5,9 +5,9 @@ const axios = require("axios");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
-const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
+const SHOPIFY_STORE = "printstick.myshopify.com";
+const SHOPIFY_TOKEN = "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";
+const INTERNAL_SECRET = "k7js9hf2n39sdf82h1ns0qpa";
 
 app.use(express.json());
 
