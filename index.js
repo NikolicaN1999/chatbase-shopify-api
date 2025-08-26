@@ -167,7 +167,7 @@ app.post("/order-status", async (req, res) => {
     }
 
     return res.status(200).json({
-      message: "Vaša porudžbina je uspešno primljena i trenutno je u obradi. ✨Kako izrađujemo personalizovane stikere po meri, svaka porudžbina prolazi kroz poseban proces dizajna i štampe, što zahteva malo više vremena od standardnih proizvoda.Zbog toga je rok izrade u proseku 5–7 radnih dana, a trudimo se da svaki stiker bude napravljen sa pažnjom i detaljima koji ga čine jedinstvenim"
+      message: "Vaša porudžbina je uspešno primljena i trenutno je u obradi.✨Kako izrađujemo personalizovane stikere po meri, svaka porudžbina prolazi kroz poseban proces dizajna i štampe, što zahteva malo više vremena od standardnih proizvoda.Zbog toga je rok izrade u proseku 5–7 radnih dana, a trudimo se da svaki stiker bude napravljen sa pažnjom i detaljima koji ga čine jedinstvenim"
     });
 
   } catch (err) {
