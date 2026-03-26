@@ -1,3 +1,4 @@
+// app.js
 const express = require("express");
 const axios = require("axios");
 
@@ -85,16 +86,45 @@ async function findCustomers({ email, first_name, last_name }) {
     return Array.isArray(data?.customers) ? data.customers : [];
   }
 
+  // Pretvaranje ćirilice u latinicu pre Shopify pretrage
+  const qFirst = cyrToLat(first_name || "").trim();
+  const qLast  = cyrToLat(last_name || "").trim();
+
   const parts = [];
-  if (first_name) parts.push(`first_name:${first_name}`);
-  if (last_name) parts.push(`last_name:${last_name}`);
+  if (qFirst) parts.push(`first_name:${qFirst}`);
+  if (qLast) parts.push(`last_name:${qLast}`);
   if (!parts.length) return [];
 
   const { data } = await api.get(`/customers/search.json`, {
     params: { query: parts.join(" ") },
   });
 
-  return Array.isArray(data?.customers) ? data.customers : [];
+  let customers = Array.isArray(data?.customers) ? data.customers : [];
+
+  // Fallback ako direktna pretraga ne vrati rezultat
+  if (!customers.length) {
+    const fallbackQueries = [];
+    if (qFirst) fallbackQueries.push(qFirst);
+    if (qLast) fallbackQueries.push(qLast);
+
+    for (const q of fallbackQueries) {
+      const { data: fallbackData } = await api.get(`/customers/search.json`, {
+        params: { query: q },
+      });
+
+      const list = Array.isArray(fallbackData?.customers) ? fallbackData.customers : [];
+
+      customers = list.filter(c => {
+        const firstMatch = qFirst ? normalize(c.first_name) === normalize(qFirst) : true;
+        const lastMatch  = qLast ? normalize(c.last_name) === normalize(qLast) : true;
+        return firstMatch && lastMatch;
+      });
+
+      if (customers.length) break;
+    }
+  }
+
+  return customers;
 }
 
 // 2) Učitaj sve porudžbine za customer_id
