@@ -232,7 +232,7 @@ const formattedCreatedAt = !isNaN(orderCreatedAt.getTime())
 
  return res.status(200).json({
   status: "processing",
-  message: `Vaša porudžbina je uspešno primljena ${formattedCreatedAt} i trenutno je u obradi. ✨ Rok izrade je u proseku 5–7 radnih dana, jer izrađujemo personalizovane stikere po meri.`
+  message: `Vaša porudžbina je uspešno primljena ${formattedCreatedAt} i trenutno je u obradi. ✨.`
 });
 
   } catch (err) {
