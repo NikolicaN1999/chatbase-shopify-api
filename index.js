@@ -212,8 +212,12 @@ app.post("/order-status", async (req, res) => {
     const lastOrder = matches.sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     )[0];
-
     const latestFulfillmentAt = getLatestFulfillmentDate(lastOrder);
+
+  const orderCreatedAt = new Date(lastOrder.created_at);
+const formattedCreatedAt = !isNaN(orderCreatedAt.getTime())
+  ? orderCreatedAt.toLocaleDateString("sr-RS")
+  : "u prethodnom periodu";
 
     if (lastOrder.fulfillment_status === "fulfilled" || latestFulfillmentAt) {
       const formatted = latestFulfillmentAt
@@ -226,10 +230,10 @@ app.post("/order-status", async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      status: "processing",
-      message: "Vaša porudžbina je uspešno primljena i trenutno je u obradi. ✨ Rok izrade je u proseku 5–7 radnih dana, jer izrađujemo personalizovane stikere po meri."
-    });
+ return res.status(200).json({
+  status: "processing",
+  message: `Vaša porudžbina je uspešno primljena ${formattedCreatedAt} i trenutno je u obradi. ✨ Rok izrade je u proseku 5–7 radnih dana, jer izrađujemo personalizovane stikere po meri.`
+});
 
   } catch (err) {
     const status = err?.response?.status || 500;
